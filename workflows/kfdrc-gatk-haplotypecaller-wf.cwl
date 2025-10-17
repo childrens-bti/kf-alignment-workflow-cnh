@@ -174,5 +174,5 @@ sbg:categories:
 - HAPLOTYPECALLER
 - WGS
 sbg:links:
-- id: 'https://github.com/childrens-bti/kf-alignment-workflow-cnh/releases/tag/v2.9.0'
+- id: 'https://github.com/childrens-bti/kf-alignment-workflow-cnh/releases/tag/v1.0.0'
   label: github-release
