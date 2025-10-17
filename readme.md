@@ -7,7 +7,7 @@ Kids First Data Resource Center's (KFDRC) Alignment and Haplotype Calling Workfl
   <img src="docs/kids_first_logo.svg" alt="Kids First repository logo" width="660px" />
 </p>
 <p align="center">
-  <a href="https://github.com/kids-first/kf-alignment-workflow/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kids-first/kf-alignment-workflow.svg?style=for-the-badge"></a>
+  <a href="https://github.com/childrens-bti/kf-alignment-workflow-cnh/blob/main/LICENSE"><img src="https://img.shields.io/github/license/childrens-bti/kf-alignment-workflow-cnh.svg?style=for-the-badge"></a>
 </p>
 
 ## KFDRC BWA-GATK Short Reads Alignment and HaplotypeCaller Workflow

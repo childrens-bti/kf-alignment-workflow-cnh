@@ -31,12 +31,12 @@ works exclusively on CAVATICA. Alternatively, if you wish to use this outside
 of CAVATICA, you will need to provide your own server license.
 
 Otherwise, this workflow uses identical inputs as our existing alignment workflow.
-For more information see: https://github.com/kids-first/kf-alignment-workflow#inputs
+For more information see: https://github.com/childrens-bti/kf-alignment-workflow-cnh#inputs
 
 ## Output Files
 
 This workflow generates outputs identical to our existing alignment workflow.
-For more information see: https://github.com/kids-first/kf-alignment-workflow#outputs
+For more information see: https://github.com/childrens-bti/kf-alignment-workflow-cnh#outputs
 
 ## Sentieon Alignment: Similarities and Differences
 
@@ -53,7 +53,7 @@ Duplicate Marking is then run on those individual shards rather than the
 complete RG BAMs. In this workflow, however, duplicates are marked over the
 whole RG BAM file. Overall this results in a slightly higher rate of marked
 duplicates and slightly lower mean coverage. For more information about the
-process in the main workflow see https://github.com/kids-first/kf-alignment-workflow#caveats.
+process in the main workflow see https://github.com/childrens-bti/kf-alignment-workflow-cnh#caveats.
 
 Finally, the metrics collection is done with a series of Sentieon algorithms
 that match our existing Picard metrics suite.
