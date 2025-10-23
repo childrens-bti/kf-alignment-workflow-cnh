@@ -36,12 +36,12 @@ doc: |
   of CAVATICA, you will need to provide your own server license.
 
   Otherwise, this workflow uses identical inputs as our existing alignment workflow.
-  For more information see: https://github.com/kids-first/kf-alignment-workflow#inputs
+  For more information see: https://github.com/childrens-bti/kf-alignment-workflow-cnh#inputs
 
   ## Output Files
 
   This workflow generates outputs identical to our existing alignment workflow.
-  For more information see: https://github.com/kids-first/kf-alignment-workflow#outputs
+  For more information see: https://github.com/childrens-bti/kf-alignment-workflow-cnh#outputs
 
   ## Sentieon Alignment: Similarities and Differences
 
@@ -58,7 +58,7 @@ doc: |
   complete RG BAMs. In this workflow, however, duplicates are marked over the
   whole RG BAM file. Overall this results in a slightly higher rate of marked
   duplicates and slightly lower mean coverage. For more information about the
-  process in the main workflow see https://github.com/kids-first/kf-alignment-workflow#caveats.
+  process in the main workflow see https://github.com/childrens-bti/kf-alignment-workflow-cnh#caveats.
 
   Finally, the metrics collection is done with a series of Sentieon algorithms
   that match our existing Picard metrics suite.
@@ -471,5 +471,5 @@ hints:
 - GVCF
 - SENTIEON
 "sbg:links":
-- id: 'https://github.com/kids-first/kf-alignment-workflow/releases/tag/v2.11.2'
+- id: 'https://github.com/childrens-bti/kf-alignment-workflow-cnh/releases/tag/v1.0.0'
   label: github-release
