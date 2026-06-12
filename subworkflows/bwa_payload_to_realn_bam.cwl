@@ -62,7 +62,9 @@ steps:
             var reads_name = self[1].reads_file.basename.replace(/.f(ast)?[aq](\.gz)?$/, "");
             return [basename, (rg_id != null ? rg_id[1] : "UNKNOWN"), reads_name].join('.');
           }
-    out: [fastp_json, fastp_html, r1_adapter, r2_adapter]
+      manual_r1_adapter: cutadapt_r1_adapter
+      manual_r2_adapter: cutadapt_r2_adapter
+    out: [fastp_json, fastp_html, r1_adapter, r2_adapter, run_cutadapt]
 
   cutadapt:
     run: ../tools/cutadapt.cwl
@@ -75,11 +77,13 @@ steps:
           var s = String(v).trim().toLowerCase();
           return s.length > 0 && s !== "unspecified";
         }
-        var payload = inputs.input_reads2;
+
         var r1ok = hasAdapter(inputs.r1_threeprime_adapter);
-        var needsR2 = payload != null && (payload.mates_file != null || payload.interleaved === true);
         var r2ok = hasAdapter(inputs.r2_threeprime_adapter);
-        return r1ok && (!needsR2 || r2ok);
+        var hasMateFile = inputs.input_reads2 != null;
+        var isInterleaved = inputs.interleaved === true;
+
+        return r1ok && (!hasMateFile || r2ok) && (!isInterleaved || r2ok);
       }
     in:
       input_reads1:
