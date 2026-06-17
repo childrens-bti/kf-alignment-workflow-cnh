@@ -59,9 +59,13 @@ Finally, the metrics collection is done with a series of Sentieon algorithms
 that match our existing Picard metrics suite.
 
 Adapter detection is implemented with `fastp` in detection mode on a sampled
-subset of reads (up to 1M by default). This step emits JSON/HTML QC reports
-and extracts detected R1/R2 adapter sequences used to gate `cutadapt` trimming
-for paired-end and interleaved inputs.
+subset of reads (up to 1M by default). This step emits JSON/HTML QC reports.
+Manual `cutadapt_r1_adapter`/`cutadapt_r2_adapter` inputs override detection
+and force `cutadapt` trimming. Without manual adapters, detected adapters are
+used only when fastp reports at least 1% adapter-trimmed bases and the selected
+adapter sequence starts with standard Illumina adapter seeds `AGATCGGA`
+(TruSeq) or `CTGTCTCT` (Nextera). For paired-end or interleaved inputs, both
+R1 and R2 must pass validation; otherwise `cutadapt` is skipped.
 
 | Step                       | KFDRC GATK            | KFDRC Sentieon                    |
 |----------------------------|-----------------------|-----------------------------------|

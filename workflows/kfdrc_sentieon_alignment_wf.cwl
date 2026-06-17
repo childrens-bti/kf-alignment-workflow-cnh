@@ -1,7 +1,7 @@
 cwlVersion: v1.2
 class: Workflow
 id: kfdrc-sentieon-alignment-workflow
-label: Kids First DRC Sentieon Alignment and gVCF Workflow
+label: Kids First DRC Sentieon Alignment and gVCF Workflow (CNH)
 doc: |
   # Kids First Data Resource Center Sentieon Short Reads Alignment and Haplotyper Workflow
 
@@ -63,10 +63,20 @@ doc: |
   Finally, the metrics collection is done with a series of Sentieon algorithms
   that match our existing Picard metrics suite.
 
+  Adapter detection is implemented with `fastp` in detection mode on a sampled
+  subset of reads (up to 1M by default). This step emits JSON/HTML QC reports.
+  Manual `cutadapt_r1_adapter`/`cutadapt_r2_adapter` inputs override detection
+  and force `cutadapt` trimming. Without manual adapters, detected adapters are
+  used only when fastp reports at least 1% adapter-trimmed bases and the selected
+  adapter sequence starts with standard Illumina adapter seeds `AGATCGGA`
+  (TruSeq) or `CTGTCTCT` (Nextera). For paired-end or interleaved inputs, both
+  R1 and R2 must pass validation; otherwise `cutadapt` is skipped.
+
   | Step                       | KFDRC GATK            | KFDRC Sentieon                    |
   |----------------------------|-----------------------|-----------------------------------|
   | Bam to Read Group (RG) BAM | samtools split        | samtools split                    |
   | RG Bam to Fastq            | biobambam2 bamtofastq | biobambam2 bamtofastq             |
+  | Adapter Detection          | fastp                 | fastp                             |
   | Adapter Trimming           | cutadapt              | cutadapt                          |
   | Fastq to RG Bam            | bwa mem               | Sentieon bwa mem                  |
   | Merge RG Bams              | sambamba merge        | Sentieon ReadWriter               |
@@ -487,5 +497,5 @@ hints:
 - GVCF
 - SENTIEON
 "sbg:links":
-- id: 'https://github.com/childrens-bti/kf-alignment-workflow-cnh/releases/tag/v1.1.0'
+- id: 'https://github.com/childrens-bti/kf-alignment-workflow-cnh/releases/tag/v1.2.0'
   label: github-release
