@@ -80,7 +80,8 @@ arguments:
       && awk -f get_ratios.awk $(inputs.input_bam.nameroot).idxstats.txt > $(inputs.input_bam.nameroot).ratio.txt
 inputs:
   run_idxstats: { type: 'boolean' }
-  input_bam: { type: 'File', secondaryFiles: [^.bai] }
+  input_bam: { type: 'File', secondaryFiles: [{pattern: '.bai', required: false}, {pattern: '^.bai', required: false}, {pattern: '.crai',
+        required: false}, {pattern: '^.crai', required: false}]}
   threads: { type: 'int?', default: 2 }
   ram: { type: 'int?', default: 3 }
 outputs:
