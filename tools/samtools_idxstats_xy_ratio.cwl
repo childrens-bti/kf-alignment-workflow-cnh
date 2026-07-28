@@ -60,8 +60,8 @@ requirements:
           if($1 == "chrY") {y_rat = $3/$2; Y_reads = $3;};
           } END {
           sex = "Unknown";
-          if (Y_reads/(X_reads+Y_reads) < 0.2) {sex = "F";}
-          else if (Y_reads/(X_reads+Y_reads) > 0.4) {sex = "M";}
+          if (y_rat/(x_rat+y_rat) < 0.2) {sex = "F";}
+          else if (y_rat/(x_rat+y_rat) > 0.4) {sex = "M";}
           printf "Y_reads_fraction %f\nX:Y_ratio %f\nX_norm_reads %f\nY_norm_reads %f\nY_norm_reads_fraction %f\ngermline_sex_estimate %s", Y_reads/(X_reads+Y_reads), x_rat/y_rat, x_rat, y_rat, y_rat/(x_rat+y_rat), sex
           }
 baseCommand: []
@@ -80,7 +80,8 @@ arguments:
       && awk -f get_ratios.awk $(inputs.input_bam.nameroot).idxstats.txt > $(inputs.input_bam.nameroot).ratio.txt
 inputs:
   run_idxstats: { type: 'boolean' }
-  input_bam: { type: 'File', secondaryFiles: [^.bai] }
+  input_bam: { type: 'File', secondaryFiles: [{pattern: '.bai', required: false}, {pattern: '^.bai', required: false}, {pattern: '.crai',
+        required: false}, {pattern: '^.crai', required: false}]}
   threads: { type: 'int?', default: 2 }
   ram: { type: 'int?', default: 3 }
 outputs:
