@@ -20,11 +20,59 @@ requirements:
   - class: DockerRequirement
     dockerPull: 'quay.io/biocontainers/fastp:1.3.6--h43da1c4_0'
   - class: InlineJavascriptRequirement
+  - class: InitialWorkDirRequirement
+    listing:
+      - entryname: run_fastp
+        entry: |
+          #!/bin/bash
+          set -euo pipefail
+          interleaved=false
+          input=""
+          previous=""
+          for arg in "$@"; do
+            if [[ "$arg" == "--interleaved_in" ]]; then
+              interleaved=true
+            elif [[ "$previous" == "-i" ]]; then
+              input="$arg"
+            fi
+            previous="$arg"
+          done
+          if [[ "$interleaved" == false ]]; then
+            exec fastp "$@"
+          fi
+          threads=""
+          reads_to_process=""
+          html=""
+          json=""
+          out1=""
+          out2=""
+          while [[ "$#" -gt 0 ]]; do
+            case "$1" in
+              -i) input="$2"; shift 2 ;;
+              --thread) threads="$2"; shift 2 ;;
+              --reads_to_process) reads_to_process="$2"; shift 2 ;;
+              -h) html="$2"; shift 2 ;;
+              -j) json="$2"; shift 2 ;;
+              -o) out1="$2"; shift 2 ;;
+              -O) out2="$2"; shift 2 ;;
+              *) shift ;;
+            esac
+          done
+          r1=/tmp/fastp_interleaved_r1.fastq
+          r2=/tmp/fastp_interleaved_r2.fastq
+          if [[ "$input" == *.gz ]]; then
+            gzip -cd -- "$input"
+          else
+            cat -- "$input"
+          fi | awk -v r1="$r1" -v r2="$r2" '{out = (int((NR - 1) / 4) % 2 == 0 ? r1 : r2); print > out}'
+          exec fastp -i "$r1" -I "$r2" --thread "$threads" \
+            --reads_to_process "$reads_to_process" --detect_adapter_for_pe \
+            -h "$html" -j "$json" -o "$out1" -O "$out2"
   - class: ResourceRequirement
     coresMin: $(inputs.threads)
     ramMin: 4000
 
-baseCommand: [fastp]
+baseCommand: [bash, run_fastp]
 
 inputs:
   reads1:
@@ -87,7 +135,7 @@ arguments:
   - position: 9
     prefix: "-O"
     valueFrom: |
-      $(inputs.reads2 != null ? "/tmp/fastp_discard_r2.fastq.gz" : null)
+      $(inputs.reads2 != null || inputs.interleaved ? "/tmp/fastp_discard_r2.fastq.gz" : null)
   - position: 100
     shellQuote: false
     valueFrom: >-
