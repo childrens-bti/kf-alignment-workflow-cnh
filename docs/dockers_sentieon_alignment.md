@@ -6,9 +6,10 @@ biobambam_bamtofastq.cwl|pgc-images.sbgenomics.com/d3b-bixu/bwa-bundle:dev
 clt_flatten_filelist.cwl|None
 clt_prepare_bwa_payload.cwl|None
 cutadapt.cwl|quay.io/biocontainers/cutadapt:4.6--py310h4b81fae_1
-fastp_adapter_detect.cwl|quay.io/biocontainers/fastp:1.3.6--h43da1c4_0
 expression_preparerg.cwl|None
+fastp_adapter_detect.cwl|quay.io/biocontainers/fastp:1.3.6--h43da1c4_0
 gatk_indexfeaturefile.cwl|pgc-images.sbgenomics.com/d3b-bixu/gatk:4.1.7.0R
+generate_ped_file.cwl|python:3.12.9
 picard_collectgvcfcallingmetrics.cwl|pgc-images.sbgenomics.com/d3b-bixu/picard:2.18.9R
 samtools_head.cwl|staphb/samtools:1.15
 samtools_idxstats_xy_ratio.cwl|pgc-images.sbgenomics.com/d3b-bixu/samtools:1.9
