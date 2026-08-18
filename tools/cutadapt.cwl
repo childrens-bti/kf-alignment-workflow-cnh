@@ -20,28 +20,22 @@ baseCommand: [cutadapt]
 stdout: $(inputs.outputname_stats)
 arguments:
   - position: 2
-    shellQuote: false
+    prefix: -a
     valueFrom: >-
-      ${
-        if (inputs.r2_threeprime_adapter && inputs.r2_threeprime_adapter.trim().length > 0) {
-          return "-A " + inputs.r2_threeprime_adapter;
-        }
-        return "";
-      }
+      $(inputs.r1_threeprime_adapter && inputs.r1_threeprime_adapter.trim().length > 0 ? inputs.r1_threeprime_adapter : null)
   - position: 2
-    shellQuote: false
+    prefix: -A
     valueFrom: >-
-      ${
-        if (inputs.r2_threeprime_adapter && inputs.input_reads2 && inputs.outputname_reads2) {
-          return "--paired-output " + inputs.outputname_reads2;
-        }
-        return "";
-      }
+      $(inputs.r2_threeprime_adapter && inputs.r2_threeprime_adapter.trim().length > 0 ? inputs.r2_threeprime_adapter : null)
+  - position: 2
+    prefix: --paired-output
+    valueFrom: >-
+      $(inputs.input_reads2 && inputs.outputname_reads2 ? inputs.outputname_reads2 : null)
 inputs:
   input_reads1: { type: 'File', inputBinding: { position: 8 }, doc: "FASTQ file containing reads1 or interleaved reads." }
   input_reads2: { type: 'File?', inputBinding: { position: 9 },  doc: "FASTQ file containing reads2." }
   interleaved: { type: 'boolean?', inputBinding: { position: 2, prefix: "--interleaved" }, doc: "Read and/or write interleaved paired-end reads." }
-  r1_threeprime_adapter: { type: 'string', inputBinding: { position: 2, prefix: "-a" }, doc: "regular 3' adapter sequence to remove from read1" }
+  r1_threeprime_adapter: { type: 'string?', doc: "regular 3' adapter sequence to remove from read1" }
   r2_threeprime_adapter: { type: 'string?', doc: "regular 3' adapter sequence to remove from read2" }
   minimum_length: { type: 'int?', default: 20, inputBinding: { position: 2, prefix: "--minimum-length" }, doc: "If you do not use this option, reads that have a length of zero (empty reads) are kept in the output" }
   quality_base: { type: 'int?', default: 33, inputBinding: { position: 2, prefix: "--quality-base" }, doc: "Phred scale used" }

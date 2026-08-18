@@ -1,29 +1,78 @@
 cwlVersion: v1.2
 class: CommandLineTool
 id: fastp_adapter_detect
-label: "fastp v0.23.4 Adapter Detection"
+label: "fastp v1.3.6 Adapter Detection"
 doc: |
   Run fastp to detect adapter sequences and produce JSON and HTML QC reports.
   Trimmed reads are discarded (/tmp); only the reports are used downstream.
   Processes up to 1M reads by default.
   - For paired-end input: provide reads2 for separate files, or set interleaved=true for interleaved file.
   - Automatically adds --detect_adapter_for_pe when reads2 is provided or interleaved=true.
-  Manual adapters override detected adapters. If no manual R1 adapter is
-  provided, detected adapters are selected for cutadapt only when fastp reports
-  at least 1% adapter-trimmed bases and the detected adapter sequence starts
-  with standard Illumina adapter seeds: AGATCGGA (TruSeq) or CTGTCTCT (Nextera).
-  For paired-end/interleaved reads, both R1 and R2 must pass validation.
-  Otherwise empty adapter files are emitted and cutadapt is skipped downstream.
+  Manual adapters override detected adapters independently for each read end.
+  Detected adapters are selected for cutadapt only when fastp annotates the exact
+  sequence as a member of its built-in known-adapter pool. Fastp's less-than-1%
+  adapter-content warning is informational and does not reject a known adapter.
+  De novo or unspecified detections are rejected. Cutadapt runs when at least
+  one read end has a manual or known detected adapter.
+  Paired-end and interleaved read ends are evaluated independently.
 requirements:
   - class: ShellCommandRequirement
   - class: DockerRequirement
-    dockerPull: 'quay.io/biocontainers/fastp:0.23.4--h5f740d0_0'
+    dockerPull: 'quay.io/biocontainers/fastp:1.3.6--h43da1c4_0'
   - class: InlineJavascriptRequirement
+  - class: InitialWorkDirRequirement
+    listing:
+      - entryname: run_fastp
+        entry: |
+          #!/bin/bash
+          set -euo pipefail
+          interleaved=false
+          input=""
+          previous=""
+          for arg in "$@"; do
+            if [[ "$arg" == "--interleaved_in" ]]; then
+              interleaved=true
+            elif [[ "$previous" == "-i" ]]; then
+              input="$arg"
+            fi
+            previous="$arg"
+          done
+          if [[ "$interleaved" == false ]]; then
+            exec fastp "$@"
+          fi
+          threads=""
+          reads_to_process=""
+          html=""
+          json=""
+          out1=""
+          out2=""
+          while [[ "$#" -gt 0 ]]; do
+            case "$1" in
+              -i) input="$2"; shift 2 ;;
+              --thread) threads="$2"; shift 2 ;;
+              --reads_to_process) reads_to_process="$2"; shift 2 ;;
+              -h) html="$2"; shift 2 ;;
+              -j) json="$2"; shift 2 ;;
+              -o) out1="$2"; shift 2 ;;
+              -O) out2="$2"; shift 2 ;;
+              *) shift ;;
+            esac
+          done
+          r1=/tmp/fastp_interleaved_r1.fastq
+          r2=/tmp/fastp_interleaved_r2.fastq
+          if [[ "$input" == *.gz ]]; then
+            gzip -cd -- "$input"
+          else
+            cat -- "$input"
+          fi | awk -v r1="$r1" -v r2="$r2" '{out = (int((NR - 1) / 4) % 2 == 0 ? r1 : r2); print > out}'
+          exec fastp -i "$r1" -I "$r2" --thread "$threads" \
+            --reads_to_process "$reads_to_process" --detect_adapter_for_pe \
+            -h "$html" -j "$json" -o "$out1" -O "$out2"
   - class: ResourceRequirement
     coresMin: $(inputs.threads)
     ramMin: 4000
 
-baseCommand: [fastp]
+baseCommand: [bash, run_fastp]
 
 inputs:
   reads1:
@@ -86,29 +135,28 @@ arguments:
   - position: 9
     prefix: "-O"
     valueFrom: |
-      $(inputs.reads2 != null ? "/tmp/fastp_discard_r2.fastq.gz" : null)
+      $(inputs.reads2 != null || inputs.interleaved ? "/tmp/fastp_discard_r2.fastq.gz" : null)
   - position: 100
     shellQuote: false
     valueFrom: >-
       && detected_r1=\$(sed -n 's/.*"read1_adapter_sequence"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' $(inputs.sample_name).fastp.json)
       && detected_r2=\$(sed -n 's/.*"read2_adapter_sequence"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' $(inputs.sample_name).fastp.json)
-      && adapter_trimmed_bases=\$(awk '/"adapter_trimmed_bases"/ {gsub(/[^0-9]/, "", $0); print; exit}' $(inputs.sample_name).fastp.json)
-      && total_bases=\$(awk '/"before_filtering"/ {in_before=1} in_before && /"total_bases"/ {gsub(/[^0-9]/, "", $0); print; exit}' $(inputs.sample_name).fastp.json)
-      && adapter_pct=\$(awk -v trimmed="$adapter_trimmed_bases" -v total="$total_bases" 'BEGIN {if (total > 0) printf "%.6f", 100 * trimmed / total; else print "0"}')
       && manual_r1='$(inputs.manual_r1_adapter ? inputs.manual_r1_adapter : "")'
       && manual_r2='$(inputs.manual_r2_adapter ? inputs.manual_r2_adapter : "")'
       && manual_r1=\$(printf '%s' "$manual_r1" | awk '{$1=$1; print}')
       && manual_r2=\$(printf '%s' "$manual_r2" | awk '{$1=$1; print}')
       && if [ "\$(printf '%s' "$manual_r1" | tr '[:upper:]' '[:lower:]')" = "unspecified" ]; then manual_r1=""; fi
       && if [ "\$(printf '%s' "$manual_r2" | tr '[:upper:]' '[:lower:]')" = "unspecified" ]; then manual_r2=""; fi
-      && adapter_pct_ok=false
-      && detected_adapters_ok=false
-      && if awk -v pct="$adapter_pct" 'BEGIN {exit pct < 1.0}'; then adapter_pct_ok=true; fi
-      && if printf '%s' "$detected_r1" | grep -qE '^(AGATCGGA|CTGTCTCT)' && { [ -z "$(inputs.interleaved || inputs.reads2 != null ? "paired" : "")" ] || printf '%s' "$detected_r2" | grep -qE '^(AGATCGGA|CTGTCTCT)'; }; then detected_adapters_ok=true; fi
+      && detected_r1_known=false
+      && detected_r2_known=false
+      && if [ -n "$detected_r1" ] && grep -Fq "$detected_r1 ->" '$(inputs.sample_name).fastp.html'; then detected_r1_known=true; fi
+      && if [ -n "$(inputs.interleaved || inputs.reads2 != null ? "paired" : "")" ] && [ -n "$detected_r2" ] && grep -Fq "$detected_r2 ->" '$(inputs.sample_name).fastp.html'; then detected_r2_known=true; fi
       && : > r1_adapter.txt
       && : > r2_adapter.txt
       && printf 'false\n' > run_cutadapt.txt
-      && if [ -n "$manual_r1" ]; then printf '%s\n' "$manual_r1" > r1_adapter.txt; printf '%s\n' "$manual_r2" > r2_adapter.txt; printf 'true\n' > run_cutadapt.txt; elif [ "$adapter_pct_ok" = true ] && [ "$detected_adapters_ok" = true ]; then printf '%s\n' "$detected_r1" > r1_adapter.txt; printf '%s\n' "$detected_r2" > r2_adapter.txt; printf 'true\n' > run_cutadapt.txt; fi
+      && if [ -n "$manual_r1" ]; then printf '%s\n' "$manual_r1" > r1_adapter.txt; elif [ "$detected_r1_known" = true ]; then printf '%s\n' "$detected_r1" > r1_adapter.txt; fi
+      && if [ -n "$(inputs.interleaved || inputs.reads2 != null ? "paired" : "")" ]; then if [ -n "$manual_r2" ]; then printf '%s\n' "$manual_r2" > r2_adapter.txt; elif [ "$detected_r2_known" = true ]; then printf '%s\n' "$detected_r2" > r2_adapter.txt; fi; fi
+      && if [ -s r1_adapter.txt ] || [ -s r2_adapter.txt ]; then printf 'true\n' > run_cutadapt.txt; fi
 
 outputs:
   fastp_json:

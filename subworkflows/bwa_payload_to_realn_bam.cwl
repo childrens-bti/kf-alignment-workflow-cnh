@@ -78,12 +78,8 @@ steps:
           return s.length > 0 && s !== "unspecified";
         }
 
-        var r1ok = hasAdapter(inputs.r1_threeprime_adapter);
-        var r2ok = hasAdapter(inputs.r2_threeprime_adapter);
-        var hasMateFile = inputs.input_reads2 != null;
-        var isInterleaved = inputs.interleaved === true;
-
-        return r1ok && (!hasMateFile || r2ok) && (!isInterleaved || r2ok);
+        return hasAdapter(inputs.r1_threeprime_adapter) ||
+          hasAdapter(inputs.r2_threeprime_adapter);
       }
     in:
       input_reads1:

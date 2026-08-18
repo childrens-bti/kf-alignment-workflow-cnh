@@ -60,12 +60,13 @@ that match our existing Picard metrics suite.
 
 Adapter detection is implemented with `fastp` in detection mode on a sampled
 subset of reads (up to 1M by default). This step emits JSON/HTML QC reports.
-Manual `cutadapt_r1_adapter`/`cutadapt_r2_adapter` inputs override detection
-and force `cutadapt` trimming. Without manual adapters, detected adapters are
-used only when fastp reports at least 1% adapter-trimmed bases and the selected
-adapter sequence starts with standard Illumina adapter seeds `AGATCGGA`
-(TruSeq) or `CTGTCTCT` (Nextera). For paired-end or interleaved inputs, both
-R1 and R2 must pass validation; otherwise `cutadapt` is skipped.
+Manual `cutadapt_r1_adapter`/`cutadapt_r2_adapter` inputs independently
+override detection for each read end. Without a manual adapter, a detected
+sequence is used only when fastp annotates it as an exact member of its built-in
+known-adapter pool. Fastp's less-than-1% warning is informational; known
+adapters are passed to `cutadapt` at any percentage. De novo and unspecified
+detections are rejected. Paired-end and interleaved read ends are evaluated
+independently, and `cutadapt` runs when at least one adapter is selected.
 
 | Step                       | KFDRC GATK            | KFDRC Sentieon                    |
 |----------------------------|-----------------------|-----------------------------------|
